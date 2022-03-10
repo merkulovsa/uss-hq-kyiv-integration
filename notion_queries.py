@@ -19,7 +19,10 @@ def stock_update_query() -> None:
                 amount = result['properties']['Видано']['number']
 
                 if amount is not None:
-                    subtraction[key] = amount
+                    if key in subtraction:
+                        subtraction[key] += amount
+                    else:
+                        subtraction[key] = amount
         
         f.close()
         os.remove(f.name)
@@ -34,7 +37,10 @@ def stock_update_query() -> None:
                 status = result['properties']['Статус']['select']
 
                 if amount is not None and status != 'null' and status['name'] == 'На складі':
-                    addition[key] = amount
+                    if key in addition:
+                        addition[key] += amount
+                    else:
+                        addition[key] = amount
 
         f.close()
         os.remove(f.name)
@@ -59,4 +65,3 @@ def stock_update_query() -> None:
         }
 
         update_page(key.replace('-', ''), update_data)
-        
