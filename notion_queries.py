@@ -16,10 +16,10 @@ def stock_update_query() -> None:
         for result in data['results']:
             for relation in result['properties']['Назва в асортименті']['relation']:
                 key = relation['id']
-                value = result['properties']['Видано']['number']
+                amount = result['properties']['Видано']['number']
 
-                if value is not None:
-                    subtraction[key] = value
+                if amount is not None:
+                    subtraction[key] = amount
         
         f.close()
         os.remove(f.name)
@@ -30,10 +30,11 @@ def stock_update_query() -> None:
         for result in data['results']:
             for relation in result['properties']['Асортимент (в наявності)']['relation']:
                 key = relation['id']
-                value = result['properties']['Кількість']['number']
+                amount = result['properties']['Кількість']['number']
+                status = result['properties']['Статус']['select']
 
-                if value is not None:
-                    addition[key] = value
+                if amount is not None and status != 'null' and status['name'] == 'На складі':
+                    addition[key] = amount
 
         f.close()
         os.remove(f.name)
@@ -58,3 +59,4 @@ def stock_update_query() -> None:
         }
 
         update_page(key.replace('-', ''), update_data)
+        
