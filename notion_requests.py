@@ -3,7 +3,7 @@ from time import time
 
 __TOKEN = None
 
-with open('TOKEN', 'r') as f:
+with open('data/INTEGRATION', 'r') as f:
     __TOKEN = f.read()
 
 __HEADERS = {
