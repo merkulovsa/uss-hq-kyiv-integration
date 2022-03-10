@@ -1,5 +1,7 @@
+from bot import start
+
 def main() -> None:
-    pass
+    start()
 
 if __name__ == "__main__":
     main()
