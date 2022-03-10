@@ -23,7 +23,7 @@ def __read_request(database_id, start_cursor):
 
     return res.json()
 
-def read_database(database_id):
+def read_database(database_id) -> str:
     data = __read_request(database_id, None)
     start_cursor = data['next_cursor']
     has_more = data['has_more']
@@ -41,7 +41,7 @@ def read_database(database_id):
         json.dump(data, f, ensure_ascii=False)
         return filename
 
-def update_page(page_id, update_data):
+def update_page(page_id, update_data) -> str:
     update_url = f"https://api.notion.com/v1/pages/{page_id}"
     data = json.dumps(update_data)
 

@@ -2,7 +2,7 @@ import os
 import json
 from notion_requests import read_database, update_page
 
-def stock_query():
+def stock_query() -> None:
     database_id_1 = 'd866a45662f240bdbdcb2668e29a0d4f'
     database_id_2 = '748a8405acb34452b65ec4128c8a7ce6'
 
