@@ -36,7 +36,7 @@ def stock_update_query() -> None:
                 amount = result['properties']['Кількість']['number']
                 status = result['properties']['Статус']['select']
 
-                if amount is not None and status != 'null' and status['name'] == 'На складі':
+                if amount is not None and status != None and status['name'] == 'На складі':
                     if key in addition:
                         addition[key] += amount
                     else:
@@ -65,3 +65,5 @@ def stock_update_query() -> None:
         }
 
         update_page(key.replace('-', ''), update_data)
+
+stock_update_query()
