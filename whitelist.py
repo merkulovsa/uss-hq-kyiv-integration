@@ -69,7 +69,7 @@ def write_pending(value: list) -> None:
     __write_list(PEDNING_PATH, value)
 
 def add_pending(user: User, chat_id: int) -> None:
-    __add_list(PEDNING_PATH, user.first_name + '#' + user.last_name + ':' + str(chat_id))
+    __add_list(PEDNING_PATH, str(user.first_name) + '#' + str(user.last_name) + ':' + str(chat_id))
 
 def get_whitelist() -> list:
     return __get_list(WHITELIST_PATH)
