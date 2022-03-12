@@ -1,7 +1,13 @@
-from telegram import Bot, BotCommandScopeChat, User
+import telegram
+import argparse
 
-WHITELIST_PATH = 'data/WHITELIST'
-PEDNING_PATH = 'data/PENDING'
+UNKNOWN = 0
+PENDING = 1
+WHITELIST = 2
+
+__WHITELIST_PATH = 'data/WHITELIST_WHITELIST'
+__PENDING_PATH = 'data/WHITELIST_PENDING'
+__NOTIFY_PATH = 'data/WHITELIST_NOTIFY'
 
 def __get_list(filename: str) -> list:
     value = []
@@ -15,33 +21,51 @@ def __get_list(filename: str) -> list:
 
     return value
 
-def __write_list(filename: str, value: list) -> None:
+def __write_list(filename: str, value: list):
     with open(filename, 'w') as f:
         for x in value:
             f.write(str(x) + '\n')
 
-def __add_list(filename: str, value) -> None:
+def __add_list(filename: str, value):
     __get_list(filename)
 
     with open(filename, 'a') as f:
         f.write(str(value) + '\n')
 
 
-def on_authentication(chat_id) -> None:
-    from bot import COMMANDS
-    from bot import SUCCESS_TEXT
+def is_in_pending(chat_id: int) -> bool:
+    return str(chat_id) in [x.split(':')[1] for x in __get_list(__PENDING_PATH)]
 
-    with open('data/TELEGRAM', 'r') as f:
-        token = f.read()
-        bot = Bot(token)
-        bot.send_message(chat_id, SUCCESS_TEXT)
-        bot.set_my_commands(COMMANDS, scope=BotCommandScopeChat(chat_id))
+def is_in_whitelist(chat_id: int) -> bool:
+    return str(chat_id) in __get_list(__WHITELIST_PATH)
 
-def inspect_interactive():
-    pending = get_pending()
-    whitelist = get_whitelist()
+def authenticate(update: telegram.Update) -> int:
+    user = update.message.from_user
+    chat_id = update.message.chat.id
 
+    if is_in_whitelist(chat_id):
+        return WHITELIST
+
+    if not is_in_pending(chat_id):
+        __add_list(__PENDING_PATH, str(user.first_name) + '#' + str(user.last_name) + ':' + str(chat_id))
+        return UNKNOWN
+    elif not is_in_whitelist(chat_id):
+        return PENDING
+
+def inspect():
+    global __on_authentication
+
+    pending = __get_list(__PENDING_PATH)
+    whitelist = __get_list(__WHITELIST_PATH)
+    notify = __get_list(__NOTIFY_PATH)
+
+    new_pending = []
     new_whitelist = whitelist
+    new_notify = notify
+
+    if len(pending) == 0:
+        print('There are no values in pending list.')
+        return
 
     for user in pending:
         name, chat_id = user.split(':')
@@ -49,39 +73,44 @@ def inspect_interactive():
 
         x = input('Add "' + first_name + ' ' + last_name + '" to whitelist? (y/n): ')
 
-        if x == 'y' or x == 'Y' and is_in_whitelist(x):
-            new_whitelist.append(str(chat_id))
-            on_authentication(chat_id)
+        if x == 'y' or x == 'Y':
+            new_whitelist.append(chat_id)
+            new_notify.append(chat_id)
+        elif x == 'n' or x == 'N':
+            pass
+        else:
+            new_pending.append(user)
 
-    write_pending([])
-    write_whitelist(new_whitelist)
+    __write_list(__WHITELIST_PATH, new_whitelist)
+    __write_list(__PENDING_PATH, new_pending)
+    __write_list(__NOTIFY_PATH, new_notify)
 
-def is_in_pending(chat_id: int) -> bool:
-    return str(chat_id) in [x.split(':')[1] for x in get_pending()]
+def clear():
+    __write_list(__WHITELIST_PATH, [])
+    __write_list(__PENDING_PATH, [])
+    __write_list(__NOTIFY_PATH, [])
 
-def is_in_whitelist(chat_id: int) -> bool:
-    return str(chat_id) in get_whitelist()
+def notify_authenticated(callback):
+    notifiers = __get_list(__NOTIFY_PATH)
 
-def get_pending() -> list:
-    return __get_list(PEDNING_PATH)
+    for chat_id in notifiers:
+        callback(chat_id)
 
-def write_pending(value: list) -> None:
-    __write_list(PEDNING_PATH, value)
+    __write_list(__NOTIFY_PATH, [])
 
-def add_pending(user: User, chat_id: int) -> None:
-    __add_list(PEDNING_PATH, str(user.first_name) + '#' + str(user.last_name) + ':' + str(chat_id))
+def main():
+    parser = argparse.ArgumentParser('whitelist tool for telegram bot')
+    parser.add_argument('-i', '--inspect', dest='inspect', action='store_true', help='run pending list inspection')
+    parser.add_argument('-c', '--clear', dest='clear', action='store_true', help='clear pending and whitelist lists')
+    
+    args = parser.parse_args()
 
-def get_whitelist() -> list:
-    return __get_list(WHITELIST_PATH)
-
-def write_whitelist(value: list) -> None:
-    __write_list(WHITELIST_PATH, value)
-
-def add_whitelist(chat_id: int) -> None:
-    __add_list(WHITELIST_PATH, str(chat_id))
-
-def main() -> None:
-    inspect_interactive()
+    if args.inspect:
+        inspect()
+    elif args.clear:
+        clear()
+    else:
+        parser.print_help()
 
 if __name__ == '__main__':
     main()

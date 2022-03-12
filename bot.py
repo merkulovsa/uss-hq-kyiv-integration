@@ -7,23 +7,23 @@ from notion_queries import stock_update_query
 
 # texts
 GREETING_TEXT = 'Доброго дня! Ви не були авторизовані командою бота. Команда розгляне ваш запит на авторизацію і бот надішле Вам повідомлення у випадку успішної авторизації. Дякуємо!'
-WARNING_TEXT = 'Ваш аккаунт ще не пройшов аутентифікацію!'
-SUCCESS_TEXT = 'Ваш аккаунт успішно пройшов аутентифікацію!'
+AUTH_WARNING_TEXT = 'Ваш аккаунт ще не пройшов аутентифікацію!'
+AUTH_SUCCESS_TEXT = 'Ваш аккаунт успішно пройшов аутентифікацію!'
 STOCK_UPDATE_GREETING_TEXT = 'Виконую запит...'
 STOCK_UPDATE_SUCCESS_TEXT = 'Запит успішно виконано.'
 STOCK_UPDATE_FAILURE_TEXT = 'Запит виконано з помилкою.'
 STOCK_UPDATE_TIME_TEXT = 'Витрачено часу (в секундах): '
 
 COMMANDS = [
-    ('/stock_update', 'Виконує запит до Notion бази даних з метою оновити колонку "Запас" в таблиці "Асортимент в наявності"')
+    ('/stock_update', 'Виконує запит до Notion бази даних з метою оновлення колонки "Запас" в таблиці "Асортимент в наявності"')
 ]
 
 
-update_id: int = None
+update_id = None
 bot: telegram.Bot = None
-handler: dict = dict()
+handler = {}
 
-def start() -> None:
+def start():
     global update_id
     global bot
 
@@ -36,43 +36,45 @@ def start() -> None:
         except IndexError:
             update_id = None
 
-        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        logging.basicConfig(
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
         while True:
             try:
-                __process(bot)
+                __process()
             except NetworkError:
                 sleep(1)
             except Unauthorized:
                 update_id += 1
 
-def __process(bot) -> None:
+
+def __process():
     global update_id
+    global bot
+
+    whitelist.notify_authenticated(on_authentication)
 
     for update in bot.get_updates(offset=update_id, timeout=10):
         update_id = update.update_id + 1
 
         if update.message:
-            if authenticate(update):
+            auth_code = whitelist.authenticate(update)
+
+            if auth_code == whitelist.WHITELIST:
                 text = update.message.text
 
                 if text in handler:
                     handler[text](update)
+            elif auth_code == whitelist.UNKNOWN:
+                update.message.reply_text(GREETING_TEXT)
+            elif auth_code == whitelist.PENDING:
+                update.message.reply_text(AUTH_WARNING_TEXT)
 
-def authenticate(update) -> bool:
-    user = update.message.from_user
-    chat_id = update.message.chat.id
+def on_authentication(chat_id):
+    global bot
 
-    if whitelist.is_in_whitelist(chat_id):
-        return True
-    
-    if not whitelist.is_in_pending(chat_id):
-        update.message.reply_text(GREETING_TEXT)
-        whitelist.add_pending(user, chat_id)
-    elif not whitelist.is_in_whitelist(chat_id):
-        update.message.reply_text(WARNING_TEXT)
-
-    return False
+    bot.send_message(chat_id, AUTH_SUCCESS_TEXT)
+    bot.set_my_commands(COMMANDS, scope=telegram.BotCommandScopeChat(chat_id))
 
 def stock_update(update: telegram.Update):
     update.message.reply_text(STOCK_UPDATE_GREETING_TEXT)
