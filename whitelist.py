@@ -5,9 +5,9 @@ UNKNOWN = 0
 PENDING = 1
 WHITELIST = 2
 
-__WHITELIST_PATH = 'data/WHITELIST_WHITELIST'
-__PENDING_PATH = 'data/WHITELIST_PENDING'
-__NOTIFY_PATH = 'data/WHITELIST_NOTIFY'
+__WHITELIST_PATH = 'whitelist_data/WHITELIST'
+__PENDING_PATH = 'whitelist_data/PENDING'
+__NOTIFY_PATH = 'whitelist_data/NOTIFY'
 
 def __get_list(filename: str) -> list:
     value = []

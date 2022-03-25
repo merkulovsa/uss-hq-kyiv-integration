@@ -3,8 +3,8 @@ from time import time
 
 __TOKEN = None
 
-with open('data/INTEGRATION', 'r') as f:
-    __TOKEN = f.read()
+with open('tokens/INTEGRATION', 'r') as f:
+    __TOKEN = f.read().replace('\n', '')
 
 __HEADERS = {
     "Authorization": "Bearer " + __TOKEN,

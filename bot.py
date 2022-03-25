@@ -27,8 +27,8 @@ def start():
     global update_id
     global bot
 
-    with open('data/TELEGRAM', 'r') as f:
-        token = f.read()
+    with open('tokens/TELEGRAM', 'r') as f:
+        token = f.read().replace('\n', '')
         bot = telegram.Bot(token)
 
         try:
