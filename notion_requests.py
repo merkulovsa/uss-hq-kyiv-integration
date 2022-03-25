@@ -48,3 +48,13 @@ def update_page(page_id, update_data) -> str:
     response = requests.request("PATCH", update_url, headers=__HEADERS, data=data)
 
     return response.status_code
+
+def create_page(database_id, create_data) -> str:
+    create_url = f"https://api.notion.com/v1/pages"
+
+    create_data["parent"] = { "database_id": database_id }
+    data = json.dumps(create_data)
+
+    response = requests.request("POST", create_url, headers=__HEADERS, data=data)
+
+    return response.status_code
