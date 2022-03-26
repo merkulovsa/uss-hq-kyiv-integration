@@ -65,5 +65,3 @@ def stock_update_query() -> None:
         }
 
         update_page(key.replace('-', ''), update_data)
-
-stock_update_query()

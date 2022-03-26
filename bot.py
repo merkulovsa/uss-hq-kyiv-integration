@@ -23,9 +23,15 @@ update_id = None
 bot: telegram.Bot = None
 handler = {}
 
+logging.basicConfig(filename='log.txt', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+
 def start():
     global update_id
     global bot
+
+    now = time()
+
+    logging.info(f'Starting bot...')
 
     with open('tokens/TELEGRAM', 'r') as f:
         token = f.read().replace('\n', '')
@@ -36,12 +42,12 @@ def start():
         except IndexError:
             update_id = None
 
-        logging.basicConfig(
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        logging.info(f'Bot has started, elapsed: {time() - now}s')
 
         while True:
             try:
                 __process()
+                pass
             except NetworkError:
                 sleep(1)
             except Unauthorized:
@@ -59,16 +65,23 @@ def __process():
 
         if update.message:
             auth_code = whitelist.authenticate(update)
+            text = str(update.message.text)
+            chat_id = update.message.chat_id
+            first_name = str(update.message.from_user.first_name)
+            last_name = str(update.message.from_user.last_name)
+
+            logging.info(f'Received message from {first_name} {last_name} (chat_id={chat_id}) with text: "{text}"')
 
             if auth_code == whitelist.WHITELIST:
-                text = update.message.text
-
                 if text in handler:
                     handler[text](update)
+                logging.warning('WHITELIST')
             elif auth_code == whitelist.UNKNOWN:
                 update.message.reply_text(GREETING_TEXT)
+                logging.warning('UNKNOWN')
             elif auth_code == whitelist.PENDING:
                 update.message.reply_text(AUTH_WARNING_TEXT)
+                logging.warning('PENDING')
 
 def on_authentication(chat_id):
     global bot
